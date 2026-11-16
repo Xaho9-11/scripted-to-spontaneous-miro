@@ -1,0 +1,13 @@
+# study data stays with the research team
+data/
+figures/
+results_summary.txt
+robot/tuner_profile.json
+*.xlsx
+*.docx
+*.csv
+# secrets
+.env
+*.key
+__pycache__/
+*.pyc

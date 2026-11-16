@@ -1,0 +1,11 @@
+{
+  "participantId": "P00",
+  "profileType": "Ambient Presence",
+  "mentalMetaphor": "example: houseplant / sleepy cat",
+  "calm_pref": "Example only. Written by profile_loader.py from a Metaphor Tuner export; copy to tuner_profile.json.",
+  "active_pref": "Example only. Describes the preferred movement when the person is under higher load.",
+  "lma_calm":   {"weight": 30, "time": 25, "flow": 70, "space": 40},
+  "lma_active": {"weight": 20, "time": 20, "flow": 60, "space": 30},
+  "_source_calm": "",
+  "_source_active": ""
+}

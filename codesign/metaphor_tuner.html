@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Animacy Metaphor Tuner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* light, iOS-like visual style */
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f7;
+            color: #111827;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+            overscroll-behavior: none;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 28px; 
+            width: 28px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -11px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2), 0 0 1px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        input[type="text"], textarea {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        
+        /* transitions for hidden elements */
+        .panel-hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="absolute inset-0 flex w-full h-full overflow-hidden">
+
+    <!-- left control panel -->
+    <aside id="sidebar" class="w-80 lg:w-96 flex-shrink-0 h-full glass-panel flex flex-col p-5 md:p-6 z-20 relative border-r border-gray-200 overflow-y-auto no-scrollbar pb-8 transition-all duration-300">
+        
+        <div class="mb-6 flex-shrink-0">
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight text-gray-900 mb-1">Metaphor Tuner</h1>
+            <p class="text-xs md:text-sm text-gray-500">Co-design tool for robotic animacy.</p>
+        </div>
+
+        <div class="space-y-4 mb-6 flex-shrink-0">
+            <div>
+                <label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Participant ID</label>
+                <input type="text" id="participant-id" placeholder="e.g., P01" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Mental Metaphor</label>
+                <textarea id="metaphor-text" rows="2" placeholder="Describe the soothing presence..." class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/10 transition-all resize-none"></textarea>
+            </div>
+        </div>
+
+        <div class="mb-4 flex-shrink-0">
+            <div class="flex p-1 bg-gray-100/80 rounded-xl border border-gray-200/50">
+                <button id="mode-calm" class="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all" onclick="setMode('calm')">Calm Mode</button>
+                <button id="mode-active" class="flex-1 py-1.5 text-xs font-medium rounded-lg text-gray-500 hover:text-gray-800 transition-all" onclick="setMode('active')">Active Mode</button>
+            </div>
+        </div>
+
+        <div class="mb-auto flex-shrink-0">
+            <label class="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wider">Presets (Calm)</label>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button onclick="applyPreset('jellyfish')" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg py-2 px-1 text-[11px] leading-tight font-semibold transition-all text-blue-500">Jellyfish Breath</button>
+                <button onclick="applyPreset('plant')" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg py-2 px-1 text-[11px] leading-tight font-semibold transition-all text-green-500">Swaying Plant</button>
+                <button onclick="applyPreset('cat')" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg py-2 px-1 text-[11px] leading-tight font-semibold transition-all text-orange-500 col-span-2">Purring Cat</button>
+            </div>
+            
+            <label class="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wider">Presets (Active)</label>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="applyPreset('stretch')" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg py-2 px-1 text-[11px] leading-tight font-semibold transition-all text-yellow-600">Stretching Pet</button>
+                <button onclick="applyPreset('balloon')" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg py-2 px-1 text-[11px] leading-tight font-semibold transition-all text-purple-500">Deflating Balloon</button>
+                <button onclick="applyPreset('gaze')" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg py-2 px-1 text-[11px] leading-tight font-semibold transition-all text-red-500 col-span-2">Attentive Gaze</button>
+            </div>
+        </div>
+
+        <button onclick="exportData()" class="mt-6 flex-shrink-0 w-full bg-gray-900 text-white font-semibold rounded-xl py-3 shadow-lg active:scale-95 transition-transform text-sm">
+            Save & Export JSON
+        </button>
+
+    </aside>
+
+    <!-- main area (right) -->
+    <main class="flex-1 flex flex-col relative h-full min-w-0 bg-[#f8f9fc]">
+        <!-- soft radial gradient on the light background -->
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,1)_0%,rgba(240,240,245,1)_100%)] pointer-events-none"></div>
+        
+        <!-- canvas -->
+        <div id="canvas-container" class="flex-1 w-full relative min-h-0 cursor-pointer">
+            <!-- full-screen button -->
+            <button id="fullscreen-btn" onclick="toggleFullscreen(event)" class="absolute top-5 right-5 z-30 p-2.5 bg-white/60 hover:bg-white/90 rounded-full shadow-sm backdrop-blur-md transition-all text-gray-600 border border-gray-200/50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+            
+            <canvas id="animacyCanvas" class="absolute inset-0 w-full h-full"></canvas>
+        </div>
+
+        <!-- bottom control panel -->
+        <div id="bottom-panel" class="flex-shrink-0 glass-panel border-t border-gray-200/60 p-5 md:p-8 pb-8 md:pb-8 flex flex-col justify-center z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.02)] transition-all duration-300">
+            <div class="max-w-4xl mx-auto w-full grid grid-cols-2 gap-x-6 gap-y-5 md:gap-x-12 md:gap-y-8">
+                
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-gray-500 mb-1 tracking-widest text-center">WEIGHT</label>
+                    <div class="flex justify-between items-center text-[10px] text-gray-400 mb-1.5 uppercase font-semibold">
+                        <span>Light</span>
+                        <span class="text-gray-900 text-sm font-bold bg-gray-100 px-2 py-0.5 rounded" id="val-weight">50</span>
+                        <span>Strong</span>
+                    </div>
+                    <input type="range" id="slider-weight" min="0" max="100" value="50">
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-gray-500 mb-1 tracking-widest text-center">TIME</label>
+                    <div class="flex justify-between items-center text-[10px] text-gray-400 mb-1.5 uppercase font-semibold">
+                        <span>Sustained</span>
+                        <span class="text-gray-900 text-sm font-bold bg-gray-100 px-2 py-0.5 rounded" id="val-time">50</span>
+                        <span>Sudden</span>
+                    </div>
+                    <input type="range" id="slider-time" min="0" max="100" value="50">
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-gray-500 mb-1 tracking-widest text-center">FLOW</label>
+                    <div class="flex justify-between items-center text-[10px] text-gray-400 mb-1.5 uppercase font-semibold">
+                        <span>Bound</span>
+                        <span class="text-gray-900 text-sm font-bold bg-gray-100 px-2 py-0.5 rounded" id="val-flow">50</span>
+                        <span>Free</span>
+                    </div>
+                    <input type="range" id="slider-flow" min="0" max="100" value="50">
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-gray-500 mb-1 tracking-widest text-center">SPACE</label>
+                    <div class="flex justify-between items-center text-[10px] text-gray-400 mb-1.5 uppercase font-semibold">
+                        <span>Indirect</span>
+                        <span class="text-gray-900 text-sm font-bold bg-gray-100 px-2 py-0.5 rounded" id="val-space">50</span>
+                        <span>Direct</span>
+                    </div>
+                    <input type="range" id="slider-space" min="0" max="100" value="50">
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- core state ---
+        const state = {
+            mode: 'calm',
+            targetParams: { weight: 50, time: 50, flow: 50, space: 50, hue: 190 },
+            currentParams: { weight: 50, time: 50, flow: 50, space: 50, hue: 190 }, 
+            lerpSpeed: 0.05 
+        };
+
+        let sequenceTimeout = null;
+        let isFullscreen = false;
+
+        // --- full-screen / clean view ---
+        function toggleFullscreen(e) {
+            if (e) e.stopPropagation(); // keep the click from reaching the canvas
+            
+            const sidebar = document.getElementById('sidebar');
+            const bottomPanel = document.getElementById('bottom-panel');
+            const fsBtn = document.getElementById('fullscreen-btn');
+
+            isFullscreen = !isFullscreen;
+
+            if (isFullscreen) {
+                // hide the UI
+                sidebar.classList.add('panel-hidden');
+                bottomPanel.classList.add('panel-hidden');
+                fsBtn.classList.add('panel-hidden'); // hide the full-screen button itself
+
+                // try native full screen (for full immersion)
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch(err => console.log("Fullscreen API error:", err));
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    elem.webkitRequestFullscreen();
+                }
+            } else {
+                // restore the UI
+                sidebar.classList.remove('panel-hidden');
+                bottomPanel.classList.remove('panel-hidden');
+                fsBtn.classList.remove('panel-hidden');
+
+                // leave native full screen
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                }
+            }
+            
+            // redraw the canvas after a delay so its size is correct
+            setTimeout(resize, 50);
+        }
+
+        // a click on empty space leaves full screen
+        document.getElementById('canvas-container').addEventListener('click', () => {
+            if (isFullscreen) {
+                toggleFullscreen();
+            }
+        });
+
+        // the system left full screen (e.g. Esc)
+        document.addEventListener('fullscreenchange', syncFullscreenState);
+        document.addEventListener('webkitfullscreenchange', syncFullscreenState);
+        
+        function syncFullscreenState() {
+            const isNativeFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+            if (!isNativeFullscreen && isFullscreen) {
+                // system left full screen while the state is still on: restore the UI
+                toggleFullscreen();
+            }
+        }
+
+
+        // --- presets ---
+        const presets = {
+            jellyfish: { weight: 55, time: 10, flow: 95, space: 10, hue: 210, mode: 'calm', lerp: 0.05 },
+            plant:     { weight: 0,  time: 45, flow: 15, space: 25, hue: 130, mode: 'calm', lerp: 0.05 },
+            cat:       { weight: 35, time: 5,  flow: 0,  space: 0,  hue: 35,  mode: 'calm', lerp: 0.05 },
+            
+            stretch:   { 
+                mode: 'active',
+                sequence: [
+                    { weight: 65, time: 50, flow: 15, space: 60, hue: 45, duration: 1500, lerp: 0.03 }, 
+                    { weight: 95, time: 80, flow: 5,  space: 95, hue: 15, duration: 2500, lerp: 0.06 }, 
+                    { weight: 20, time: 10, flow: 40, space: 25, hue: 55, lerp: 0.015 } 
+                ]
+            },
+            
+            balloon:   { 
+                mode: 'active',
+                sequence: [
+                    { weight: 70, time: 40, flow: 10, space: 50, hue: 320, duration: 1500, lerp: 0.04 }, 
+                    { weight: 30, time: 80, flow: 95, space: 40, hue: 280, duration: 2000, lerp: 0.05 }, 
+                    { weight: 5,  time: 5,  flow: 90, space: 15, hue: 220, lerp: 0.02 } 
+                ]
+            },
+
+            gaze:      {
+                mode: 'active',
+                sequence: [
+                    { weight: 20, time: 20, flow: 60, space: 5,  hue: 200, duration: 1000, lerp: 0.08 },  
+                    { weight: 60, time: 60, flow: 5,  space: 100, hue: 360, duration: 3500, lerp: 0.01 }, 
+                    { weight: 35, time: 20, flow: 15, space: 85,  hue: 380, lerp: 0.02 } 
+                ]
+            }
+        };
+
+        const sliders = {
+            weight: document.getElementById('slider-weight'),
+            time: document.getElementById('slider-time'),
+            flow: document.getElementById('slider-flow'),
+            space: document.getElementById('slider-space')
+        };
+        const displays = {
+            weight: document.getElementById('val-weight'),
+            time: document.getElementById('val-time'),
+            flow: document.getElementById('val-flow'),
+            space: document.getElementById('val-space')
+        };
+
+        Object.keys(sliders).forEach(key => {
+            sliders[key].addEventListener('input', (e) => {
+                clearTimeout(sequenceTimeout); 
+                state.lerpSpeed = 0.08; 
+                const val = parseInt(e.target.value);
+                state.targetParams[key] = val;
+                displays[key].innerText = val;
+
+                const w = state.targetParams.weight;
+                const f = state.targetParams.flow;
+                const s = state.targetParams.space;
+
+                if (state.mode === 'calm') {
+                    state.targetParams.hue = 190 - (w * 0.5);
+                    if (w > 35) state.targetParams.hue = 35;
+                } else {
+                    if (s > 70) state.targetParams.hue = 360; 
+                    else if (f > 70) state.targetParams.hue = 280; 
+                    else state.targetParams.hue = 45; 
+                }
+            });
+        });
+
+        function applyPreset(name) {
+            clearTimeout(sequenceTimeout); 
+            const p = presets[name];
+            if (!p) return;
+            
+            setMode(p.mode);
+            
+            if (p.sequence) {
+                runSequence(p.sequence, 0);
+            } else {
+                updateParams(p);
+                state.lerpSpeed = p.lerp || 0.05;
+            }
+        }
+
+        function runSequence(seq, index) {
+            if (index >= seq.length) return;
+            updateParams(seq[index]); 
+            state.lerpSpeed = seq[index].lerp || 0.05; 
+            if (seq[index].duration) {
+                sequenceTimeout = setTimeout(() => {
+                    runSequence(seq, index + 1);
+                }, seq[index].duration);
+            }
+        }
+
+        function updateParams(vals) {
+            Object.keys(sliders).forEach(key => {
+                if (vals[key] !== undefined) {
+                    state.targetParams[key] = vals[key];
+                    sliders[key].value = vals[key];
+                    displays[key].innerText = vals[key];
+                }
+            });
+            if (vals.hue !== undefined) {
+                state.targetParams.hue = vals.hue;
+            }
+        }
+
+        function setMode(mode) {
+            state.mode = mode;
+            const btnCalm = document.getElementById('mode-calm');
+            const btnActive = document.getElementById('mode-active');
+            
+            if (mode === 'calm') {
+                btnCalm.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all";
+                btnActive.className = "flex-1 py-1.5 text-xs font-medium rounded-lg text-gray-500 hover:text-gray-800 transition-all";
+            } else {
+                btnActive.className = "flex-1 py-1.5 text-xs font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all";
+                btnCalm.className = "flex-1 py-1.5 text-xs font-medium rounded-lg text-gray-500 hover:text-gray-800 transition-all";
+            }
+        }
+
+        // --- canvas renderer (with speed-up and split gaze) ---
+        const canvas = document.getElementById('animacyCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let globalTime = 0;
+
+        function resize() {
+            const container = document.getElementById('canvas-container');
+            width = container.clientWidth;
+            height = container.clientHeight;
+            canvas.width = width * window.devicePixelRatio;
+            canvas.height = height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        window.addEventListener('resize', resize);
+        setTimeout(resize, 100);
+
+        function lerp(start, end, amt) {
+            return (1 - amt) * start + amt * end;
+        }
+
+        function createBlobPath(baseRadiusX, baseRadiusY, f) {
+            const numPoints = 120;
+            ctx.beginPath();
+            for (let i = 0; i <= numPoints; i++) {
+                const angle = (i / numPoints) * Math.PI * 2;
+                
+                const bump1 = Math.sin(angle * 3 + globalTime * 1.5);
+                const bump2 = Math.cos(angle * 5 - globalTime * 1.2);
+                
+                const totalWobble = (bump1 * 14 * f) + (bump2 * 8 * f);
+
+                const rX = baseRadiusX + totalWobble;
+                const rY = baseRadiusY + totalWobble;
+                
+                const px = Math.cos(angle) * rX;
+                const py = Math.sin(angle) * rY;
+
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            
+            const lSpeed = state.lerpSpeed;
+            state.currentParams.weight = lerp(state.currentParams.weight, state.targetParams.weight, lSpeed);
+            state.currentParams.time = lerp(state.currentParams.time, state.targetParams.time, lSpeed);
+            state.currentParams.flow = lerp(state.currentParams.flow, state.targetParams.flow, lSpeed);
+            state.currentParams.space = lerp(state.currentParams.space, state.targetParams.space, lSpeed);
+            state.currentParams.hue = lerp(state.currentParams.hue, state.targetParams.hue, lSpeed);
+
+            const w = state.currentParams.weight / 100;
+            const t = state.currentParams.time / 100;
+            const f = state.currentParams.flow / 100;
+            const s = state.currentParams.space / 100;
+            const hue = state.currentParams.hue;
+
+            // 20% faster
+            const tempoMultiplier = 0.0048 + (t * 0.066); 
+            globalTime += tempoMultiplier;
+
+            ctx.save();
+            ctx.translate(width / 2, height / 2);
+
+            const sFocus = Math.min(s / 0.7, 1.0);
+
+            // wandering
+            const roamRadius = (1 - sFocus) * 100;
+            const baseOffsetX = Math.sin(globalTime * 0.6) * roamRadius;
+            const baseOffsetY = Math.cos(globalTime * 0.4) * roamRadius * 0.6;
+            const rotation = (1 - sFocus) * Math.sin(globalTime * 0.5) * 0.4;
+            
+            const jitterX = f * (Math.sin(globalTime * 1.1) * Math.cos(globalTime * 1.7)) * 50;
+            const jitterY = f * (Math.cos(globalTime * 1.3) * Math.sin(globalTime * 1.5)) * 50;
+
+            const finalX = baseOffsetX + jitterX;
+            const finalY = baseOffsetY + jitterY;
+
+            ctx.translate(finalX, finalY);
+            ctx.rotate(rotation);
+
+            // gravity deformation
+            const breathe = Math.sin(globalTime * 1.8); 
+            const scaleY = 1 + (w * 0.25 * breathe);
+            const scaleX = 1 - (w * 0.12 * breathe); 
+            
+            ctx.translate(0, 80);
+            ctx.scale(scaleX, scaleY);
+            ctx.translate(0, -80);
+
+            // --- 3D jelly body ---
+            const baseRX = 100;
+            const baseRY = 90;
+
+            // shadow
+            ctx.beginPath();
+            ctx.ellipse(0, baseRY + 15, baseRX * 0.8, 12, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+            ctx.fill();
+
+            // off-centre radial gradient
+            createBlobPath(baseRX, baseRY, f);
+            const bodyGrad = ctx.createRadialGradient(-baseRX * 0.25, -baseRY * 0.25, 0, 0, 0, baseRX * 1.3);
+            
+            bodyGrad.addColorStop(0, `hsla(${hue}, 100%, 85%, 0.95)`);
+            bodyGrad.addColorStop(0.4, `hsla(${hue}, 100%, 75%, 0.8)`);
+            bodyGrad.addColorStop(0.8, `hsla(${hue}, 95%, 65%, 0.5)`);
+            bodyGrad.addColorStop(1, `hsla(${hue}, 90%, 60%, 0.05)`);
+            
+            ctx.fillStyle = bodyGrad;
+            ctx.fill();
+
+            // glass-like inner glow on the outline
+            ctx.globalCompositeOperation = 'screen';
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = `hsla(${hue}, 100%, 95%, 0.3)`;
+            ctx.stroke();
+            ctx.globalCompositeOperation = 'source-over';
+
+            // --- abstract gaze (morphing eyes) ---
+            const gazeX = -20 - (sFocus * 10);
+            const gazeY = -30 - (sFocus * 15); 
+            
+            // ambient glow
+            ctx.beginPath();
+            const ambientRadius = 60 - (sFocus * 30); 
+            const ambientAlpha = 0.2 + (sFocus * 0.1); 
+            const hlGrad = ctx.createRadialGradient(gazeX, gazeY, 0, gazeX, gazeY, ambientRadius);
+            hlGrad.addColorStop(0, `rgba(255, 255, 255, ${ambientAlpha})`);
+            hlGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+            ctx.fillStyle = hlGrad;
+            ctx.arc(gazeX, gazeY, ambientRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // vertical highlight that splits in two (only when Space > 70%)
+            const eyeProgress = Math.max(0, (s - 0.7) / 0.3);
+
+            if (eyeProgress > 0) {
+                const eyeDist = eyeProgress * 22;      
+                const eyeRx = 10 - (eyeProgress * 3);  
+                const eyeRy = 10 + (eyeProgress * 15); 
+                const eyeBlur = 10 - (eyeProgress * 8); 
+                const eyeAlpha = 0.4 + (eyeProgress * 0.5); 
+                
+                ctx.save();
+                ctx.translate(gazeX, gazeY);
+
+                ctx.shadowBlur = eyeBlur;
+                ctx.shadowColor = 'rgba(255, 255, 255, 1)';
+                ctx.fillStyle = `rgba(255, 255, 255, ${eyeAlpha})`;
+
+                // left vertical highlight
+                ctx.beginPath();
+                ctx.ellipse(-eyeDist, 0, eyeRx, eyeRy, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // right vertical highlight
+                ctx.beginPath();
+                ctx.ellipse(eyeDist, 0, eyeRx, eyeRy, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            } else {
+                // Space < 70%: one whole elliptical highlight
+                const singleRx = 25 - (s * 15); 
+                const singleRy = 20 - (s * 10); 
+                const singleAlpha = 0.2 + (s * 0.28); 
+                
+                ctx.save();
+                ctx.translate(gazeX, gazeY);
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = 'rgba(255, 255, 255, 1)';
+                ctx.fillStyle = `rgba(255, 255, 255, ${singleAlpha})`;
+                
+                ctx.beginPath();
+                ctx.ellipse(0, 0, singleRx, singleRy, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+
+            ctx.restore();
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+
+        function exportData() {
+            const pId = document.getElementById('participant-id').value || 'Anonymous';
+            const metaphor = document.getElementById('metaphor-text').value;
+            const btn = document.querySelector('button[onclick="exportData()"]');
+            const originalText = btn.innerText;
+            
+            const exportObj = {
+                timestamp: new Date().toISOString(),
+                participantId: pId,
+                mentalMetaphor: metaphor,
+                contextMode: state.mode,
+                lmaParameters: {
+                    weight_energy: state.targetParams.weight,
+                    time_tempo: state.targetParams.time,
+                    flow_spontaneity: state.targetParams.flow,
+                    space_focus: state.targetParams.space
+                }
+            };
+
+            const dataStr = JSON.stringify(exportObj, null, 2);
+
+            try {
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `M12_Codesign_${pId}_${state.mode}.json`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(dataStr);
+                } else {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = dataStr;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand("copy");
+                    textArea.remove();
+                }
+
+                btn.innerText = "✓ Saved & Copied to Clipboard";
+                btn.classList.add('bg-gray-900', 'text-white');
+            } catch (err) {
+                btn.innerText = "❌ Export Failed";
+                btn.classList.add('bg-red-500', 'text-white');
+            }
+
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove('bg-red-500');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
