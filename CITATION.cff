@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the paper below."
+title: "scripted-to-spontaneous-miro"
+type: software
+license: MIT
+repository-code: "https://github.com/Xaho9-11/scripted-to-spontaneous-miro"
+authors:
+  - family-names: Wang
+    given-names: Chenghao
+preferred-citation:
+  type: conference-paper
+  title: "From Scripted to Spontaneous: Personalising Animacy of VLM-Driven Desktop Companion Robot Behaviours During Focused Work"
+  authors:
+    - family-names: Wang
+      given-names: Chenghao
+    - family-names: Wang
+      given-names: Chao
+    - family-names: Li
+      given-names: Jing
+    - family-names: Barakova
+      given-names: Emilia I.
+  collection-title: "Proceedings of the 21st International Conference on Tangible, Embedded, and Embodied Interaction (TEI '27)"
+  publisher:
+    name: ACM
+  year: 2027
